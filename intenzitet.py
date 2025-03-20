@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def intensity_matrix(boolean_matrix, distance, width, wavelength, upscale, limit):
+def intensity_matrix(boolean_matrix, distance, width, wavelength, upscale):
     '''distance[m]\nwidth[m]\nwavelength[nm]'''
 
     delta = lambda dL: dL*2*np.pi/wavelength*10**9
@@ -11,7 +11,6 @@ def intensity_matrix(boolean_matrix, distance, width, wavelength, upscale, limit
 
     dx = width/m
     z = distance
-    normalizer = 0
 
     for i_main in range(n*upscale):
         for j_main in range(m*upscale):
@@ -24,8 +23,6 @@ def intensity_matrix(boolean_matrix, distance, width, wavelength, upscale, limit
 
                     if boolean_matrix[i_bool][j_bool]:
 
-                        if i_main==0 and j_main==0:
-                            normalizer += 1
                         x = abs(i_bool+(upscale-1)/2*n-i_main)*dx
                         y = abs(j_bool+(upscale-1)/2*m-j_main)*dx
                         xyz = np.sqrt(x**2+y**2+z**2)
@@ -34,20 +31,18 @@ def intensity_matrix(boolean_matrix, distance, width, wavelength, upscale, limit
                         sum_sin += np.sin(d)/xyz
             
             matrix[i_main][j_main] = sum_cos**2+sum_sin**2
+            normalizer = np.max(matrix)
 
-    return __scaled_matrix(np.divide(matrix, normalizer**2), limit)
+    return np.divide(matrix, normalizer)
 
-def __scaled_matrix(matrix, lim):
-    '''lim [0,1]'''
-
-    maximum = lim*np.max(matrix)
+def __scaled_matrix(matrix, limit):
     
     for i in range(matrix.shape[0]):
         for j in range(matrix.shape[1]):
 
-            if matrix[i][j] > maximum:
+            if matrix[i][j] > limit:
                 matrix[i][j] = 0
-            
+    
     return matrix
 
 def create_circle(n, m, r):
@@ -61,6 +56,37 @@ def create_circle(n, m, r):
         for j in range(m):
 
             if np.sqrt((i-center_i)**2+(j-center_j)**2) <= r:
+
+                matrix[i][j] = True
+
+    return matrix
+
+def create_circles(n, m, c, r):
+
+    matrix = np.zeros((n,m), dtype=bool)
+    
+    for i in range(n):
+        for j in range(m):
+
+            for k, center in enumerate(c):
+
+                if np.sqrt((i-center[0])**2+(j-center[1])**2) <= r[k]:
+
+                    matrix[i][j] = True
+
+    return matrix
+
+def create_line(n, m, k):
+
+    matrix = np.zeros((n,m), dtype=bool)
+
+    center_i = (n-1)//2
+    
+    for i in range(n):
+        
+        if abs(i-center_i-0.25) < k*0.5:
+
+            for j in range(m):
 
                 matrix[i][j] = True
 
@@ -82,7 +108,7 @@ def colour(wavelength=0):
         cmap="Reds"
     return cmap
 
-def plot_results(boolean_matrix, intensity_matrix, intensity_cmap):
+def plot_results(boolean_matrix, intensity_matrix, limits, intensity_cmap):
 
     plt.imshow(boolean_matrix, cmap="gray")
     plt.title("Pukotina")
@@ -90,8 +116,10 @@ def plot_results(boolean_matrix, intensity_matrix, intensity_cmap):
     plt.yticks([])
     plt.show()
 
-    plt.imshow(intensity_matrix, cmap=intensity_cmap)
-    plt.title("Difrakcijski uzorak")
-    plt.xticks([])
-    plt.yticks([])
-    plt.show()
+    for lim in limits:
+
+        plt.imshow(__scaled_matrix(intensity_matrix, lim), cmap=intensity_cmap)
+        plt.title("Difrakcijski uzorak (relativni intenzitet<={})".format(lim))
+        plt.xticks([])
+        plt.yticks([])
+        plt.show()

@@ -1,30 +1,51 @@
 import intenzitet as i
-
-def nacrtaj_krug(dimenzije, udaljenost, promjer, valna_duljina, povecavanje=1, ogranicenje=1, visok_kontrast=False):
-    '''dimenzije (n,m,r): matrica nxm, krug radijusa r\n
-    udaljenost [m]: od pukotine do zaslona\n
-    promjer [m]: promjer kruzne pukotine\n
-    valna_duljina [nm]: lambda svjetlosti\n
-    povecavanje k (prirodan broj): zastor k puta veci od pukotine\n
-    ogranicenje M (0<M<1): sve vrijednosti veće od M*max =0\n
-    visok_kontrast (bool): vrijedost True primijeni posebnu boju'''
-
-    n,m,r = dimenzije
-    papir = i.create_circle(n, m, r)
-
-    zaslon = i.intensity_matrix(papir, udaljenost, promjer/2/r*m, valna_duljina, povecavanje, ogranicenje)
-    
-    boja = i.colour(valna_duljina)
-    if visok_kontrast:
-        boja = i.colour()
-    
-    i.plot_results(papir, zaslon, boja)
+import numpy as np
 
 # udaljenost od 1m do 2m i promjer od od 1mm (postavke realnog eksperimenta)
-# dimenzije (20,20,10) s povecanjem 3 (kratak run time i dovoljno preciznosti)
-# ogranicenje 1 (citava slika) / od 0.1 do 0.01 (promatranje maksimuma visih redova)
-# valna duljina od 380nm do 740nm
 
-# nefizikalni uzorak za vece iznose promjera (manjak preciznosti pa razlika u fazi izmedu susjednih tocaka pre velika?)
+def pukotina(oblik):
 
-nacrtaj_krug((20,20,10), 1.5, 0.001, 550, 3, 1)
+    oblik = ("{}".format(oblik)).lower()
+
+    if oblik in ["krug", "1"]:
+        return i.create_circle(n, m, polumjer)
+    
+    elif oblik in ["crta", "2"]:
+        return i.create_line(n, m, debljina)
+    
+    elif oblik in ["krugovi", "3"]:
+        return i.create_circles(n, m, sredista, polumjeri)
+    
+    else:
+        matrix = [[False,True,False,True,False]]
+        matrix += [[False,True,False,True,False]]
+        matrix += [[False]*5]
+        matrix += [[True]+[False]*3+[True]]
+        matrix += [[False]+[True]*3+[False]]
+        return np.array(matrix)
+
+n = 30
+m = 30
+udaljenost = 1 #[m]
+sirina = 0.001 #[m]
+valna_duljina = 450 #[nm]
+povecavanje = 5
+ogranicenja = [1, 0.1, 0.05, 0.01]
+
+#KRUG (1)
+polumjer = 15
+
+#CRTA (2)
+debljina = 2
+
+#KRUGOVI (3)
+sredista = [(10,5),(10,16)]
+polumjeri = [3,4]
+
+papir = pukotina(1) #oblik ili broj oblika
+
+zaslon = i.intensity_matrix(papir, udaljenost, sirina, valna_duljina, povecavanje)
+    
+boja = i.colour(valna_duljina)
+    
+i.plot_results(papir, zaslon, ogranicenja, boja)
