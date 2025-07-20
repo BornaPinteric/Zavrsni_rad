@@ -1,51 +1,50 @@
 import intenzitet as i
-import numpy as np
 
-# udaljenost od 1m do 2m i promjer od od 1mm (postavke realnog eksperimenta)
+#POSTAVKA REALNOG EKSPERIMENTA
 
-def pukotina(oblik):
-
-    oblik = ("{}".format(oblik)).lower()
-
-    if oblik in ["krug", "1"]:
-        return i.create_circle(n, m, polumjer)
-    
-    elif oblik in ["crta", "2"]:
-        return i.create_line(n, m, debljina)
-    
-    elif oblik in ["krugovi", "3"]:
-        return i.create_circles(n, m, sredista, polumjeri)
-    
-    else:
-        matrix = [[False,True,False,True,False]]
-        matrix += [[False,True,False,True,False]]
-        matrix += [[False]*5]
-        matrix += [[True]+[False]*3+[True]]
-        matrix += [[False]+[True]*3+[False]]
-        return np.array(matrix)
-
-n = 30
-m = 30
 udaljenost = 1 #[m]
 sirina = 0.001 #[m]
-valna_duljina = 450 #[nm]
-povecavanje = 5
-ogranicenja = [1, 0.1, 0.05, 0.01]
 
-#KRUG (1)
-polumjer = 15
+ogranicenja = [0, 0.07, 0.01, 0.004]
 
-#CRTA (2)
-debljina = 2
+def jedan_uzorak():
 
-#KRUGOVI (3)
-sredista = [(10,5),(10,16)]
-polumjeri = [3,4]
+    #PARAMETRI
+    n = 20
+    m = 20
+    povecavanje = 4
 
-papir = pukotina(1) #oblik ili broj oblika
+    valna_duljina = 400 #[nm]
 
-zaslon = i.intensity_matrix(papir, udaljenost, sirina, valna_duljina, povecavanje)
-    
-boja = i.colour(valna_duljina)
-    
-i.plot_results(papir, zaslon, ogranicenja, boja)
+    #GENERACIJA PUKOTINE
+    polumjer = n//2
+    pukotina = i.create_circle(n, m, polumjer)
+
+    #GENERACIJA UZORKA
+    difrakcijski_uzorak = i.intensity_matrix(pukotina, udaljenost, sirina/n, valna_duljina, povecavanje, approx=True)
+
+    #USPOREDBA I PRIKAZ
+    i.compare_to_theory(difrakcijski_uzorak[0], udaljenost, sirina/n, sirina*2*polumjer/n, valna_duljina)
+    i.plot_results(pukotina, *difrakcijski_uzorak, ogranicenja)
+
+def tri_uzorka():
+
+    #PARAMETRI
+    n = 20
+    m = 20
+    povecavanje = 3
+
+    valne_duljine_lista = [380, 560, 740] #[nm]
+
+    #GENERACIJA PUKOTINE
+    polumjer = n//2
+    pukotina = i.create_circle(n, m, polumjer)
+
+    #GENERACIJA UZORAKA
+    generirani_uzorci = i.intensity_matrix_list(pukotina, udaljenost, sirina/n, valne_duljine_lista, povecavanje)
+
+    #PRIKAZ
+    i.overlay_results(pukotina, generirani_uzorci, ogranicenja)
+
+#jedan_uzorak()
+tri_uzorka()
